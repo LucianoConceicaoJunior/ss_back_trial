@@ -1,5 +1,6 @@
 class MoviesController < ApplicationController
   before_action :authenticate
+  before_action :get_user, except: [:index] 
 
   def index
     @movies = Movie.all
@@ -7,36 +8,40 @@ class MoviesController < ApplicationController
   end
 
   def recommendations
-    favorite_movies = User.find(params[:user_id]).favorites
+    favorite_movies = @user.favorites
     @recommendations = RecommendationEngine.new(favorite_movies).recommendations
     render json: @recommendations
   end
 
   def user_rented_movies
-    @rented = User.find(params[:user_id]).rented
+    @rented = @user.rented
     render json: @rented
   end
 
   def rent
-    user = User.find(params[:user_id])
     movie = Movie.find(params[:id])
     movie.available_copies -= 1
     movie.save
-    user.rented << movie
+    @user.rented << movie
     render json: movie
   end
 
-  def authenticate
-    auth = false
+  private
 
-    error = 'Invalid API Key'
+    def authenticate
+      auth = false
 
-    if params[:api_key].present?
-      user = User.where(api_key: params[:api_key])
-      auth = user.present?
-    else
-      error = 'API Key is missing. Please include api_key parameter on request'
+      error = 'Invalid API Key'
+
+      if params[:api_key].present?
+        auth = User.find_by(api_key: params[:api_key]).present?
+      else
+        error = 'API Key is missing. Please include api_key parameter on request'
+      end
+      render json: { error: error }, status: :unauthorized if !auth
     end
-    render json: { error: error }, status: :unauthorized if !auth
-  end
+
+    def get_user
+      @user = User.find_by(api_key: params[:api_key])
+    end
 end
