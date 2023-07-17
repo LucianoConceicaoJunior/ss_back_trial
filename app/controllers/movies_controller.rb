@@ -19,7 +19,9 @@ class MoviesController < ApplicationController
   end
 
   def rent
-    movie = Movie.find(params[:id])
+    movie = Movie.find(params[:id]) rescue nil
+    return render json: { error: "The movie with ID #{params[:id]} doesn't exist" }, status: :not_found if !movie.present?
+    return render json: { error: "#{movie.title} has no available copies for rent" }, status: :not_acceptable if movie.available_copies <= 0
     movie.available_copies -= 1
     movie.save
     @user.rented << movie
