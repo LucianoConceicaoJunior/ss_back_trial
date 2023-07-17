@@ -1,5 +1,5 @@
 3.times do |i|
-  User.create!(name: "User#{i+1}")
+  User.create!(name: "User#{i+1}", api_key: SecureRandom.urlsafe_base64)
 end
   
 movies = [
