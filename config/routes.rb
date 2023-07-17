@@ -5,5 +5,6 @@ Rails.application.routes.draw do
     get :recommendations, on: :collection
     get :user_rented_movies, on: :collection
     post :rent, on: :member
+    post :return, on: :member
   end
 end
