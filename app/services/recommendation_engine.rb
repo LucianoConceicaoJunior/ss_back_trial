@@ -1,23 +1,20 @@
 class RecommendationEngine
-  def initialize(favorite_movies)
+  def initialize(favorite_movies, rented)
     @favorite_movies = favorite_movies
+    @rented = rented
   end
 
   def recommendations
-    movie_titles = get_movie_names(@favorite_movies)
-    genres = Movie.where(title: movie_titles).pluck(:genre)
-    common_genres = genres.group_by{ |e| e }.sort_by{ |k, v| -v.length }.map(&:first).take(3)
-    Movie.where(genre: common_genres).order(rating: :desc).limit(10)
+    favorite_rec = get_recommendations(@favorite_movies)
+    rented_rec = get_recommendations(@rented)
+    return { based_on_favorites: favorite_rec, based_on_reted: rented_rec }
   end
 
   private
 
-  def get_movie_names(movies)
-    names = []
-    @favorite_movies.each do |movie|
-      names << movie.title
+    def get_recommendations(movies)
+      genres = movies.pluck(:genre)
+      common_genres = genres.group_by{ |e| e }.sort_by{ |k, v| -v.length }.map(&:first).take(3)
+      return Movie.where(genre: common_genres, available_copies: 1...Float::INFINITY).order(rating: :desc).limit(10)
     end
-
-    return names
-  end
 end
